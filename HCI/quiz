@@ -1,5 +1,4 @@
-
-<!DOCTYPE html>
+html = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -487,3 +486,38 @@
       });
 
       const percentage = Math.round((score / quizData.length) * 100);
+      scoreLineEl.textContent = `Score: ${score} / ${quizData.length} (${percentage}%)`;
+
+      let message = 'Good start — review the feedback and try again.';
+      if (percentage >= 85) {
+        message = 'Excellent work — you have a strong grasp of HCI layer design.';
+      } else if (percentage >= 70) {
+        message = 'Well done — you understand most of the key ideas.';
+      } else if (percentage >= 50) {
+        message = 'Reasonable attempt — revisit the principles, process, and non-functional requirements.';
+      }
+
+      scoreMessageEl.textContent = message;
+      resultsEl.classList.add('show');
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function resetQuiz() {
+      renderQuiz();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    submitBtn.addEventListener('click', submitQuiz);
+    resetBtn.addEventListener('click', resetQuiz);
+
+    renderQuiz();
+  </script>
+</body>
+</html>
+"""
+
+path = "/mnt/data/hci-layer-design-quiz.html"
+with open(path, "w", encoding="utf-8") as f:
+    f.write(html)
+
+print(path)
