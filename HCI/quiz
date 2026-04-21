@@ -1,1 +1,489 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HCI Layer Design Quiz</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --wrong-bg: #fef2f2;
+      --wrong-border: #ef4444;
+      --neutral-border: #e5e7eb;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 30%, var(--bg) 100%);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      width: min(960px, calc(100% - 32px));
+      margin: 32px auto 48px;
+    }
+
+    .hero {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border-radius: 20px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      margin-bottom: 20px;
+    }
+
+    .toolbar-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      background: #eff6ff;
+      color: var(--primary-dark);
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .primary:hover { background: var(--primary-dark); }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .secondary:hover { background: #d1d5db; }
+
+    .question-card {
+      background: var(--card);
+      border: 1px solid var(--neutral-border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .question-card.correct {
+      background: var(--correct-bg);
+      border-color: var(--correct-border);
+    }
+
+    .question-card.incorrect {
+      background: var(--wrong-bg);
+      border-color: var(--wrong-border);
+    }
+
+    .q-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .q-number {
+      min-width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+
+    .q-title {
+      margin: 0;
+      font-size: 1.08rem;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      border: 1px solid var(--neutral-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .option:hover {
+      border-color: #93c5fd;
+      background: #f8fbff;
+    }
+
+    .option input {
+      margin-top: 3px;
+      transform: scale(1.1);
+    }
+
+    .option.correct-answer {
+      border-color: var(--correct-border);
+      background: var(--correct-bg);
+    }
+
+    .option.wrong-answer {
+      border-color: var(--wrong-border);
+      background: var(--wrong-bg);
+    }
+
+    .feedback {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.96rem;
+      display: none;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.correct {
+      background: var(--correct-bg);
+      border: 1px solid var(--correct-border);
+    }
+    .feedback.incorrect {
+      background: var(--wrong-bg);
+      border: 1px solid var(--wrong-border);
+    }
+
+    .results {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 26px;
+      box-shadow: var(--shadow);
+      margin-top: 24px;
+      display: none;
+    }
+
+    .results.show { display: block; }
+
+    .results h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .score-line {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        width: min(100% - 20px, 960px);
+        margin-top: 16px;
+      }
+      .hero, .toolbar, .question-card, .results {
+        padding: 16px;
+      }
+      .q-header {
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>HCI Layer Design Quiz</h1>
+      <p>
+        A student-friendly quiz based on Week 09/10 Human–Computer Interaction Layer Design.
+        Select one answer for each question, then submit to see your score and feedback.
+      </p>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz controls">
+      <div class="toolbar-left">
+        <div class="badge" id="questionCount">15 questions</div>
+        <div class="badge" id="progressText">0 answered</div>
+      </div>
+      <div class="button-row">
+        <button class="secondary" id="resetBtn" type="button">Reset</button>
+        <button class="primary" id="submitBtn" type="button">Submit Quiz</button>
+      </div>
+    </section>
+
+    <main id="quiz"></main>
+
+    <section class="results" id="results" aria-live="polite">
+      <h2>Your Results</h2>
+      <div class="score-line" id="scoreLine"></div>
+      <p class="muted" id="scoreMessage"></p>
+    </section>
+
+    <p class="footer-note">
+      Self-contained HTML file for GitHub deployment. Works well with GitHub Pages.
+    </p>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        question: "What is the main goal of UI design?",
+        options: ["Improve system speed", "Improve user interaction", "Reduce database size", "Increase security"],
+        answer: 1,
+        explanation: "UI design focuses on making interaction between the user and the system clear, efficient, and satisfying."
+      },
+      {
+        question: "Which principle ensures users know where they are in the system?",
+        options: ["Aesthetics", "Consistency", "Content Awareness", "Layout"],
+        answer: 2,
+        explanation: "Content awareness means users understand what information they are seeing and where they are in the interface."
+      },
+      {
+        question: "What does the 3-click rule mainly relate to?",
+        options: ["Security", "Navigation efficiency", "Data input", "System performance"],
+        answer: 1,
+        explanation: "The 3-click rule is about helping users reach what they need with minimal navigation effort."
+      },
+      {
+        question: "Which of the following is NOT a UI design principle discussed in the lecture?",
+        options: ["Layout", "Consistency", "Compilation", "Aesthetics"],
+        answer: 2,
+        explanation: "Compilation is a programming concept, not a user interface design principle."
+      },
+      {
+        question: "What is the purpose of consistency in UI design?",
+        options: ["Reduce coding", "Improve aesthetics only", "Help users predict behaviour", "Increase system speed"],
+        answer: 2,
+        explanation: "Consistency lets users transfer learning from one part of the interface to another."
+      },
+      {
+        question: "Which is NOT one of the three fundamental parts of most user interfaces?",
+        options: ["Navigation", "Input", "Output", "Database"],
+        answer: 3,
+        explanation: "The three core UI parts are navigation, input, and output. A database belongs elsewhere in the system architecture."
+      },
+      {
+        question: "What is a use scenario?",
+        options: ["A database structure", "A system architecture diagram", "A user interaction story", "A testing method"],
+        answer: 2,
+        explanation: "A use scenario describes the steps a user takes to accomplish a task through the interface."
+      },
+      {
+        question: "What is the first major step in the UI design process?",
+        options: ["Prototyping", "Evaluation", "Identifying use cases", "Testing"],
+        answer: 2,
+        explanation: "The design process starts by understanding common user tasks and use cases."
+      },
+      {
+        question: "Why is prototyping important in UI design?",
+        options: ["It removes the need for evaluation", "It helps test design ideas before full development", "It mainly improves database performance", "It guarantees perfect usability"],
+        answer: 1,
+        explanation: "Prototypes let designers and users test ideas early and improve them before full implementation."
+      },
+      {
+        question: "What is input validation mainly used for?",
+        options: ["Speeding up networks", "Improving output formatting only", "Ensuring data entered is correct", "Making screens colourful"],
+        answer: 2,
+        explanation: "Validation checks completeness, format, range, and other rules to keep data accurate."
+      },
+      {
+        question: "A form requires users to type everything manually even when common values could be pre-filled. Which principle is being weakened?",
+        options: ["Aesthetics", "Minimal Effort", "Consistency", "Layout"],
+        answer: 1,
+        explanation: "Minimal effort means reducing unnecessary work for the user, including extra typing."
+      },
+      {
+        question: "A button behaves differently on two pages even though it has the same label. What is the main issue?",
+        options: ["Layout problem", "Consistency problem", "Performance issue", "Input error"],
+        answer: 1,
+        explanation: "When the same control behaves differently, users lose confidence because the system feels unpredictable."
+      },
+      {
+        question: "Why might a desktop-style interface fail on a mobile phone?",
+        options: ["Because mobile devices are always faster", "Because it ignores smaller screens and touch interaction", "Because mobile devices do not support navigation", "Because security is always lower on mobile"],
+        answer: 1,
+        explanation: "Mobile design must account for screen size, touch gestures, context of use, and limited space."
+      },
+      {
+        question: "If a system takes 10 seconds to respond after a click, which type of requirement is most clearly affected?",
+        options: ["Aesthetic requirement", "Performance requirement", "Layout requirement", "Output requirement"],
+        answer: 1,
+        explanation: "Slow response times are mainly a performance issue, and they strongly affect user experience."
+      },
+      {
+        question: "If dates are displayed in the wrong local format for users in another country, what issue is this?",
+        options: ["Navigation issue", "Security issue", "Cultural requirement issue", "Input device issue"],
+        answer: 2,
+        explanation: "International and cultural requirements include local date formats, colours, language, and conventions."
+      }
+    ];
+
+    const quizEl = document.getElementById('quiz');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultsEl = document.getElementById('results');
+    const scoreLineEl = document.getElementById('scoreLine');
+    const scoreMessageEl = document.getElementById('scoreMessage');
+    const progressTextEl = document.getElementById('progressText');
+    const questionCountEl = document.getElementById('questionCount');
+
+    questionCountEl.textContent = `${quizData.length} questions`;
+
+    function renderQuiz() {
+      quizEl.innerHTML = '';
+      quizData.forEach((item, index) => {
+        const card = document.createElement('section');
+        card.className = 'question-card';
+        card.dataset.index = index;
+
+        const optionsHtml = item.options.map((option, optionIndex) => `
+          <label class="option" for="q${index}_o${optionIndex}">
+            <input type="radio" name="q${index}" id="q${index}_o${optionIndex}" value="${optionIndex}" />
+            <span>${option}</span>
+          </label>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="q-header">
+            <div class="q-number">${index + 1}</div>
+            <h3 class="q-title">${item.question}</h3>
+          </div>
+          <div class="options">${optionsHtml}</div>
+          <div class="feedback" id="feedback-${index}"></div>
+        `;
+
+        quizEl.appendChild(card);
+      });
+
+      document.querySelectorAll('input[type="radio"]').forEach(input => {
+        input.addEventListener('change', updateProgress);
+      });
+
+      updateProgress();
+      resultsEl.classList.remove('show');
+    }
+
+    function updateProgress() {
+      let answered = 0;
+      quizData.forEach((_, index) => {
+        if (document.querySelector(`input[name="q${index}"]:checked`)) {
+          answered += 1;
+        }
+      });
+      progressTextEl.textContent = `${answered} answered`;
+    }
+
+    function submitQuiz() {
+      let score = 0;
+
+      quizData.forEach((item, index) => {
+        const card = document.querySelector(`.question-card[data-index="${index}"]`);
+        const feedback = document.getElementById(`feedback-${index}`);
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        const optionLabels = card.querySelectorAll('.option');
+
+        card.classList.remove('correct', 'incorrect');
+        optionLabels.forEach(label => label.classList.remove('correct-answer', 'wrong-answer'));
+
+        if (!selected) {
+          feedback.className = 'feedback show incorrect';
+          feedback.textContent = `No answer selected. Correct answer: ${item.options[item.answer]}. ${item.explanation}`;
+          card.classList.add('incorrect');
+          optionLabels[item.answer].classList.add('correct-answer');
+          return;
+        }
+
+        const selectedIndex = Number(selected.value);
+        const isCorrect = selectedIndex === item.answer;
+
+        if (isCorrect) {
+          score += 1;
+          card.classList.add('correct');
+          optionLabels[selectedIndex].classList.add('correct-answer');
+          feedback.className = 'feedback show correct';
+          feedback.textContent = `Correct. ${item.explanation}`;
+        } else {
+          card.classList.add('incorrect');
+          optionLabels[selectedIndex].classList.add('wrong-answer');
+          optionLabels[item.answer].classList.add('correct-answer');
+          feedback.className = 'feedback show incorrect';
+          feedback.textContent = `Not quite. Correct answer: ${item.options[item.answer]}. ${item.explanation}`;
+        }
+      });
+
+      const percentage = Math.round((score / quizData.length) * 100);
